@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK | Cyber Elegance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Sour+Gummy:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js and GSAP for Particle Game -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Live Clock Styles with Glass Design */
+        :root {
+            --clock-radius: 0px;
+            --clock-blur: 28px;
+            --clock-border-width: 1.5px;
+            --clock-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+            --clock-glass-from: rgba(255 255 255 / 0.08);
+            --clock-glass-to: rgba(255 255 255 / 0.03);
+
+            --clock-glass-hover-from: rgba(255 255 255 / 0.16);
+            --clock-glass-hover-to: rgba(255 255 255 / 0.06);
+
+            --clock-shadow-main: rgba(0 0 0 / 0.25);
+            --clock-shadow-accent-1: rgba(138 43 226 / 0.35);
+            --clock-shadow-accent-2: rgba(0 191 255 / 0.25);
+        }
+
+        .live-clock-container {
+            display: flex;
+            justify-content: center;
+            margin: 140px 0 24px 0;
+            animation: fadeInDown 1s ease-out;
+            position: relative;
+            padding: 0 20px;
+        }
+
+        .live-clock {
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 24px 32px;
+            border-radius: var(--clock-radius);
+            background: linear-gradient(135deg, var(--clock-glass-from), var(--clock-to));
+            backdrop-filter: blur(var(--clock-blur));
+            -webkit-backdrop-filter: blur(var(--clock-blur));
+            border: var(--clock-border-width) solid transparent;
+            
+            box-shadow:
+                0 10px 30px var(--clock-shadow-main),
+                inset 0 1px 0 rgba(255 255 255 / 0.15),
+                inset 0 -1px 0 rgba(255 255 255 / 0.04);
+            
+            transition: transform var(--clock-transition),
+                        box-shadow var(--clock-transition),
+                        background var(--clock-transition);
+            
+            max-width: fit-content;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .live-clock::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            padding: var(--clock-border-width);
+            border-radius: inherit;
+            background: linear-gradient(
+                135deg,
+                rgba(255 255 255 / 0.45),
+                rgba(138 43 226 / 0.45),
+                rgba(0 191 255 / 0.45),
+                rgba(255 105 180 / 0.45),
+                rgba(255 255 255 / 0.45)
+            );
+            background-size: 200% 200%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.55;
+            animation: borderFlow 3s linear infinite;
+            transition: opacity var(--clock-transition), animation-duration var(--clock-transition);
+        }
+
+        .live-clock::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(
+                circle at var(--x, 50%) var(--y, 50%),
+                rgba(255 255 255 / 0.22),
+                transparent 55%
+            );
+            opacity: 0;
+            transition: opacity var(--clock-transition);
+        }
+
+        .live-clock:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: linear-gradient(135deg, var(--clock-glass-hover-from), var(--clock-glass-hover-to));
+            box-shadow:
+                0 14px 50px var(--clock-shadow-accent-1),
+                0 0 80px var(--clock-shadow-accent-2),
+                inset 0 1px 0 rgba(255 255 255 / 0.25),
+                inset 0 -1px 0 rgba(255 255 255 / 0.08);
+        }
+
+        .live-clock:hover::before {
+            opacity: 1;
+            animation-duration: 2s;
+        }
+
+        .live-clock:hover::after {
+            opacity: 1;
+        }
+
+        .live-clock .shimmer {
+            position: absolute;
+            inset: -60%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255 255 255 / 0.12),
+                rgba(255 255 255 / 0.35),
+                rgba(255 255 255 / 0.12),
+                transparent
+            );
+            transform: translateX(-100%) rotate(30deg);
+            animation: shimmer 5s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .live-clock > *:not(.shimmer) {
+            position: relative;
+            z-index: 2;
+        }
+
+        .live-clock:hover .shimmer {
+            animation-duration: 1.5s;
+        }
+
+        .time-zone-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 130px;
+            padding: 0 8px;
+        }
+
+        .time-zone-label {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 12px;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .time-zone-label::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+        }
+
+        .time-zone-card.ist .time-zone-label {
+            color: #6366F1;
+            text-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+        }
+
+        .time-zone-card.wib .time-zone-label {
+            color: #06B6D4;
+            text-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
+        }
+
+        .time-display {
+            font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .separator {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .date-display {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 0.875rem;
+            color: #6B7280;
+            margin-bottom: 6px;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .timezone-info {
+            font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.7rem;
+            color: #9CA3AF;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .clock-divider {
+            display: flex;
+            align-items: center;
+            margin: 0 24px;
+            position: relative;
+        }
+
+        .divider-line {
+            width: 1px;
+            height: 48px;
+            background: linear-gradient(to bottom, 
+                transparent, 
+                rgba(156, 163, 175, 0.4) 20%, 
+                rgba(156, 163, 175, 0.6) 50%, 
+                rgba(156, 163, 175, 0.4) 80%, 
+                transparent);
+            margin: 0 12px;
+        }
+
+        .divider-dot {
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #6366F1 0%, #8B5CF6 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+            margin: 0 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        .divider-dot {
+            width: 5px;
+            height: 5px;
+            background: #9CA3AF;
+            border-radius: 50%;
+            margin: 5px 0;
+            box-shadow: 0 0 4px rgba(156, 163, 175, 0.5);
+        }
+
+        .divider-line:nth-child(3) {
+            margin-top: 4px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Glass Button Animations */
+        @keyframes borderFlow {
+            to { background-position: 200% 50%; }
+        }
+
+        @keyframes shimmer {
+            to { transform: translateX(100%) rotate(30deg); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .live-clock {
+                &, &::before, .shimmer {
+                    animation: none;
+                    transition: none;
+                }
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .live-clock-container {
+                margin: 120px 0 20px 0;
+            }
+
+            .time-display {
+                font-size: 1.7rem;
+            }
+
+            .time-zone-label {
+                font-size: 0.7rem;
+            }
+
+            .date-display {
+                font-size: 0.8rem;
+            }
+
+            .timezone-info {
+                font-size: 0.65rem;
+                padding: 1px 6px;
+            }
+
+            .clock-divider {
+                margin: 0 20px;
+            }
+
+            .time-zone-card {
+                min-width: 110px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .live-clock-container {
+                margin: 100px 0 16px 0;
+            }
+
+            .live-clock {
+                padding: 16px 20px;
+                border-radius: 20px;
+            }
+
+            .time-zone-card {
+                min-width: 100px;
+                padding: 0 6px;
+            }
+
+            .time-display {
+                font-size: 1.4rem;
+            }
+
+            .clock-divider {
+                margin: 0 16px;
+            }
+
+        @media (max-width: 480px) {
+            .live-clock-container {
+                margin-bottom: 20px;
+                padding: 0 10px;
+            }
+
+            .live-clock {
+                max-width: 100%;
+                padding: 14px 20px;
+            }
+
+            .time-display {
+                font-size: 16px;
+            }
+
+            .clock-divider {
+                margin: 0 12px;
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+
+        /* Creepy Button Styles */
+        .creepy-btn {
+            background-color: #000;
+            border-radius: 1.25em;
+            color: #f5f5f5;
+            cursor: pointer;
+            letter-spacing: 1px;
+            min-width: 12em;
+            outline: 0.1875em solid transparent;
+            transition: outline 0.1s linear;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Londrina Solid', sans-serif;
+            font-size: 1.1rem;
+            border: none;
+            margin-top: 1.5rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+        }
+
+        .creepy-btn,
+        .creepy-btn__cover,
+        .creepy-btn__eye {
+            position: relative;
+        }
+
+        .creepy-btn,
+        .creepy-btn__pupil {
+            background-color: #000;
+        }
+
+        .creepy-btn__cover,
+        .creepy-btn__pupil {
+            border-radius: inherit;
+            display: block;
+        }
+
+        .creepy-btn__cover {
+            background-color: #6366F1;
+            box-shadow: 0 0 0 0.125em #000 inset;
+            padding: 0.75em 1.5em;
+            inset: 0;
+            transform-origin: 1.25em 50%;
+            transition: background-color 0.3s, transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .creepy-btn__eye {
+            animation: eye-blink 3s infinite;
+            background-color: #f5f5f5;
+            border-radius: 50%;
+            overflow: hidden;
+            width: 0.75em;
+            height: 0.75em;
+            position: relative;
+        }
+
+        .creepy-btn__eyes,
+        .creepy-btn__pupil {
+            position: absolute;
+        }
+
+        .creepy-btn__eyes {
+            display: flex;
+            align-items: center;
+            gap: 0.375em;
+            right: 1em;
+            bottom: 0.5em;
+            height: 0.75em;
+        }
+
+        .creepy-btn__pupil {
+            aspect-ratio: 1;
+            top: 50%;
+            left: 50%;
+            width: 0.375em;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease-out;
+        }
+
+        .creepy-btn:focus-visible {
+            outline: 0.1875em solid #a78bfa;
+        }
+
+        .creepy-btn:hover .creepy-btn__cover {
+            background-color: #5b5bd6;
+        }
+
+        .creepy-btn:focus-visible .creepy-btn__cover,
+        .creepy-btn:hover .creepy-btn__cover {
+            transform: rotate(-12deg);
+            transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1.65);
+        }
+
+        .creepy-btn:active .creepy-btn__cover {
+            transform: rotate(0);
+            transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        @keyframes eye-blink {
+            0%, 92%, 100% {
+                animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
+                height: 0.75em;
+            }
+
+            96% {
+                animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+                height: 0;
+            }
+        }
+
+        /* Mobile Responsive for Creepy Button */
+        @media (max-width: 768px) {
+            .creepy-btn {
+                min-width: 10em;
+                font-size: 1rem;
+            }
+        }
+
+
+
+
+
+        .particle-header {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            text-align: left;
+            z-index: 10;
+            mix-blend-mode: difference;
+        }
+
+        .particle-header h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+            text-transform: uppercase;
+            background: linear-gradient(
+                135deg,
+                #f8fafc 0%,
+                #e2e8f0 15%,
+                #cbd5e1 30%,
+                #94a3b8 45%,
+                #cbd5e1 60%,
+                #e2e8f0 75%,
+                #f8fafc 85%,
+                #ffffff 100%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            opacity: 0.95;
+            letter-spacing: -1px;
+            text-shadow: 
+                0 0 10px rgba(248, 250, 252, 0.3),
+                0 0 20px rgba(226, 232, 240, 0.2),
+                0 0 30px rgba(203, 213, 225, 0.1),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(148, 163, 184, 0.2);
+            filter: 
+                drop-shadow(0 0 20px rgba(248, 250, 252, 0.4))
+                drop-shadow(0 0 40px rgba(203, 213, 225, 0.2));
+            margin: 0;
+        }
+
+        #particle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle-controls {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            padding: 0 1rem;
+        }
+
+        .particle-input-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .particle-input-wrapper:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .particle-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 1rem 1.25rem;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .particle-input:focus {
+            outline: none;
+        }
+
+        .particle-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .particle-button {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .particle-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.5);
+        }
+
+        .particle-button:active {
+            transform: translateY(1px);
+        }
+
+        .particle-button-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .particle-button-content svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .particle-button:hover .particle-button-content svg {
+            transform: translateX(3px);
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <!-- Digital Rain Background -->
+    <div id="digital-rain"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- Navigation -->
+        <nav class="navigation">
+            <div class="logo">
+                <a href="index.html">AK</a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="schedule.html" class="nav-link">Schedule</a>
+                <a href="about.html" class="nav-link">About</a>
+            </div>
+        </nav>
+
+
+
+
+        <div class="live-clock-container">
+            <div class="live-clock">
+                <div class="shimmer"></div>
+                <div class="time-zone-card ist">
+                    <div class="time-zone-label">IST</div>
+                    <div class="time-display">
+                        <span class="hours">00</span>
+                        <span class="separator">:</span>
+                        <span class="minutes">00</span>
+                        <span class="separator">:</span>
+                        <span class="seconds">00</span>
+                    </div>
+                    <div class="date-display">Monday</div>
+                    <div class="timezone-info">UTC+5:30</div>
+                </div>
+                
+                <div class="clock-divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-dot"></div>
+                    <div class="divider-line"></div>
+                </div>
+                
+                <div class="time-zone-card wib">
+                    <div class="time-zone-label">WIB</div>
+                    <div class="time-display">
+                        <span class="hours">00</span>
+                        <span class="separator">:</span>
+                        <span class="minutes">00</span>
+                        <span class="separator">:</span>
+                        <span class="seconds">00</span>
+                    </div>
+                    <div class="date-display">Monday</div>
+                    <div class="timezone-info">UTC+7:00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Cyber Elegance</h1>
+                <p class="hero-subtitle">Where minimalism meets digital complexity</p>
+                <button class="creepy-btn" type="button">
+                    <span class="creepy-btn__eyes">
+                        <span class="creepy-btn__eye">
+                            <span class="creepy-btn__pupil"></span>
+                        </span>
+                        <span class="creepy-btn__eye">
+                            <span class="creepy-btn__pupil"></span>
+                        </span>
+                    </span>
+                    <span class="creepy-btn__cover">Enter the Matrix</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="section-header">
+                <h2>Digital Harmony</h2>
+                <p>Experience the beauty of organized chaos</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3>Digital Rain</h3>
+                    <p>Experience the aesthetic beauty of falling data streams with our signature digital rain effect.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 7H4V17H20V7ZM18 5V19H6V5H18Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3>Glassmorphism</h3>
+                    <p>Transparent, blurred elements create depth and modern elegance in our interface design.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Aesthetic Design</h3>
+                    <p>Carefully crafted color palettes and typography create a visually stunning experience.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Section -->
+        <section class="interactive">
+            <div class="section-header">
+                <h2>Connect with the Matrix</h2>
+                <p>Experience the interface of tomorrow</p>
+            </div>
+            
+            <div class="interactive-grid">
+                <div class="input-card">
+                    <h3>Enter the Matrix</h3>
+                    <p>Send a message into the digital void</p>
+                    <div class="input-group">
+                        <input type="text" placeholder="Type your message..." class="matrix-input">
+                        <button class="send-button">Send</button>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <h3>System Status</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Connection Quality</span>
+                        <span class="stat-value">98.7%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Data Integrity</span>
+                        <span class="stat-value">99.9%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Matrix Stability</span>
+                        <span class="stat-value">100%</span>
+                    </div>
+                    <div style="margin-top: 24px; text-align: center;">
+                        <a href="schedule.html" style="color: #6D28D9; text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 500; transition: color 200ms ease;">
+                            View Dual-Time Schedule (IST + WIB) →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 AK. dev by Krish with love.</p>
+                <div class="footer-links">
+                    <a href="about.html" class="footer-link">About</a>
+                    <a href="#" class="footer-link">Terms</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+
+
+    <script>
+        // Mouse state for glass effects
+        const mouse = {
+            x: 0.5,
+            y: 0.5,
+            targetX: 0.5,
+            targetY: 0.5,
+        };
+
+        const clamp = (v) => Math.max(0, Math.min(1, v));
+
+        let rafId = null;
+
+        const onPointerMove = (e) => {
+            if (rafId) return;
+
+            rafId = requestAnimationFrame(() => {
+                mouse.targetX = clamp(e.clientX / window.innerWidth);
+                mouse.targetY = clamp(1 - e.clientY / window.innerHeight);
+                rafId = null;
+            });
+        };
+
+        window.addEventListener("pointermove", onPointerMove, { passive: true });
+
+        // Glass button effect for clock
+        const updateClockHover = (e) => {
+            const clock = document.querySelector('.live-clock');
+            if (!clock) return;
+            
+            const rect = clock.getBoundingClientRect();
+            const x = clamp((e.clientX - rect.left) / rect.width) * 100;
+            const y = clamp((e.clientY - rect.top) / rect.height) * 100;
+            
+            clock.style.setProperty("--x", `${x}%`);
+            clock.style.setProperty("--y", `${y}%`);
+        };
+
+        const resetClockHover = () => {
+            const clock = document.querySelector('.live-clock');
+            if (clock) {
+                clock.style.setProperty("--x", "50%");
+                clock.style.setProperty("--y", "50%");
+            }
+        };
+
+        document.querySelectorAll(".live-clock").forEach((clock) => {
+            clock.addEventListener("pointermove", updateClockHover, { passive: true });
+            clock.addEventListener("pointerleave", resetClockHover, { passive: true });
+        });
+
+
+
+        // Live Clock Functionality
+        class LiveClock {
+            constructor() {
+                this.initClock();
+                this.updateClock();
+                setInterval(() => this.updateClock(), 1000);
+            }
+
+            initClock() {
+                // Get clock elements
+                this.istCard = document.querySelector('.time-zone-card.ist');
+                this.wibCard = document.querySelector('.time-zone-card.wib');
+            }
+
+            updateClock() {
+                const now = new Date();
+                
+                // Update IST (UTC+5:30)
+                this.updateTimezone(now, this.istCard, 5.5);
+                
+                // Update WIB (UTC+7:00)
+                this.updateTimezone(now, this.wibCard, 7);
+            }
+
+            updateTimezone(baseTime, element, offset) {
+                // Calculate timezone time
+                const timezoneTime = new Date(baseTime.getTime() + (offset * 60 * 60 * 1000));
+                
+                // Get time components
+                const hours = timezoneTime.getUTCHours();
+                const minutes = timezoneTime.getUTCMinutes();
+                const seconds = timezoneTime.getUTCSeconds();
+                
+                // Get day of week
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const day = days[timezoneTime.getUTCDay()];
+                
+                // Update DOM elements
+                const hoursElement = element.querySelector('.hours');
+                const minutesElement = element.querySelector('.minutes');
+                const secondsElement = element.querySelector('.seconds');
+                const dateElement = element.querySelector('.date-display');
+                
+                if (hoursElement) hoursElement.textContent = String(hours).padStart(2, '0');
+                if (minutesElement) minutesElement.textContent = String(minutes).padStart(2, '0');
+                if (secondsElement) secondsElement.textContent = String(seconds).padStart(2, '0');
+                if (dateElement) dateElement.textContent = day;
+            }
+        }
+
+        // Initialize clock when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            new LiveClock();
+            initCreepyButton();
+        });
+
+        // Creepy Button Eye Tracking
+        function initCreepyButton() {
+            const creepyBtn = document.querySelector('.creepy-btn');
+            if (!creepyBtn) return;
+
+            const eyesRef = creepyBtn.querySelector('.creepy-btn__eyes');
+            const pupils = creepyBtn.querySelectorAll('.creepy-btn__pupil');
+            
+            let eyeCoords = { x: 0, y: 0 };
+
+            function updateEyes(e) {
+                const userEvent = e.touches ? e.touches[0] : e;
+                if (!eyesRef) return;
+
+                // Get the center of the eyes container and cursor location
+                const eyesRect = eyesRef.getBoundingClientRect();
+                const eyes = {
+                    x: eyesRect.left + eyesRect.width / 2,
+                    y: eyesRect.top + eyesRect.height / 2
+                };
+                const cursor = {
+                    x: userEvent.clientX,
+                    y: userEvent.clientY
+                };
+
+                // Calculate the eye angle
+                const dx = cursor.x - eyes.x;
+                const dy = cursor.y - eyes.y;
+                const angle = Math.atan2(-dy, dx) + Math.PI / 2;
+
+                // Calculate pupil distance from eye center
+                const visionRangeX = 180;
+                const visionRangeY = 75;
+                const distance = Math.hypot(dx, dy);
+                const x = Math.sin(angle) * distance / visionRangeX;
+                const y = Math.cos(angle) * distance / visionRangeY;
+
+                eyeCoords = { x, y };
+                updatePupilPosition();
+            }
+
+            function updatePupilPosition() {
+                const translateX = `${-50 + eyeCoords.x * 50}%`;
+                const translateY = `${-50 + eyeCoords.y * 50}%`;
+                
+                pupils.forEach(pupil => {
+                    pupil.style.transform = `translate(${translateX}, ${translateY})`;
+                });
+            }
+
+            // Add event listeners
+            creepyBtn.addEventListener('mousemove', updateEyes);
+            creepyBtn.addEventListener('touchmove', updateEyes);
+            
+            // Optional: Add click handler for the button
+            creepyBtn.addEventListener('click', function() {
+                // You can add functionality here for what happens when the button is clicked
+                console.log('Entered the Matrix!');
+            });
+        }
+
+
+    </script>
+</body>
+</html>

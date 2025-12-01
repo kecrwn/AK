@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule (IST + WIB) | AK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&family=Urbanist:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;600;700&family=Science:wght@300;400;500;600;700&family=Nunito:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Enable smooth scrolling for the entire page */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Schedule-specific styles */
+        .schedule-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .schedule-title {
+            font-family: 'Orbitron', 'Exo 2', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00D4FF, #0099CC, #0066FF, #00FFFF);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-top: 16px;
+            margin-bottom: 16px;
+            letter-spacing: 0.05em;
+            animation: gradientShift 4s ease-in-out infinite alternate;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            position: relative;
+            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+        }
+
+        .schedule-title::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #00D4FF, #0099CC, #0066FF, #00FFFF);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease-in-out infinite alternate reverse;
+            z-index: -1;
+            filter: blur(15px);
+            opacity: 0.7;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .schedule-filters {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: #111827;
+            cursor: pointer;
+            transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .filter-button:hover, .filter-button.active {
+            background: rgba(109, 40, 217, 0.1);
+            border-color: #6D28D9;
+            color: #6D28D9;
+            transform: translateY(-2px);
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .schedule-item {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            padding: 18px;
+            transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .schedule-item.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+
+        .schedule-time {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .time-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 500;
+            color: #6D28D9;
+        }
+
+        .date-display {
+            font-size: 14px;
+            color: #4B5563;
+        }
+
+        .event-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .event-description {
+            font-size: 14px;
+            color: #4B5563;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .event-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #4B5563;
+        }
+
+        .meta-icon {
+            width: 16px;
+            height: 16px;
+            color: #6D28D9;
+        }
+
+        .event-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #22D3EE, #06B6D4);
+            color: white;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+
+
+        .event-category.school {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+        }
+
+        .event-category.tuition {
+            background: linear-gradient(135deg, #14B8A6, #06B6D4);
+        }
+
+        /* Dual Time Zone Display */
+        .dual-timezone {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+
+        .time-zone {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .time-zone.ist {
+            color: #6D28D9;
+        }
+
+        .time-zone.wib {
+            color: #22D3EE;
+        }
+
+        .time-zone-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            min-width: 40px;
+        }
+
+        /* Time zone label colors */
+        .time-zone.ist .time-zone-label {
+            color: #6D28D9;
+            background: rgba(109, 40, 217, 0.1);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        .time-zone.wib .time-zone-label {
+            color: #22D3EE;
+            background: rgba(34, 211, 238, 0.1);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        /* Schedule-specific spacing adjustments for navigation */
+        .schedule-nav-spacing {
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .schedule-filters {
+                gap: 8px;
+            }
+            
+            .filter-button {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+            
+            .schedule-item {
+                padding: 16px;
+            }
+            
+            .schedule-subsection-header {
+                margin: 12px 0 0 0;
+            }
+            }
+            
+            .schedule-nav-spacing {
+                margin-bottom: 32px;
+            }
+
+            .schedule-title {
+                font-size: 2.5rem;
+                margin-top: 12px;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .schedule-title {
+                font-size: 2rem;
+                letter-spacing: 0.03em;
+            }
+        }
+        /* Section Headers */
+        .schedule-section-header {
+            grid-column: 1 / -1;
+            margin: 32px 0 24px 0;
+            text-align: center;
+        }
+
+        .schedule-section-header h2 {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #6D28D9;
+            margin: 0 0 8px 0;
+            text-shadow: 0 0 10px rgba(109, 40, 217, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            color: #6D28D9;
+            filter: drop-shadow(0 0 5px rgba(109, 40, 217, 0.3));
+            transition: all 300ms ease;
+        }
+
+        .schedule-section-header:hover .section-icon {
+            color: #22D3EE;
+            filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.5));
+            transform: scale(1.1);
+        }
+
+        .schedule-section-description {
+            font-family: 'Merriweather', Georgia, serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #6B7280;
+            font-style: italic;
+            margin: 8px 0 0 0;
+            letter-spacing: 0.02em;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(107, 114, 128, 0.1);
+        }
+
+        /* Cool Font Options for Section Descriptions */
+        .font-space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #4F46E5;
+            letter-spacing: 0.025em;
+            text-align: center;
+            text-transform: uppercase;
+            text-shadow: 0 1px 4px rgba(79, 70, 229, 0.15);
+        }
+
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #0891B2;
+            letter-spacing: 0.01em;
+            text-align: center;
+            text-transform: capitalize;
+        }
+
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #7C2D12;
+            letter-spacing: 0.03em;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #92400E;
+            letter-spacing: 0.08em;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .font-urbanist {
+            font-family: 'Urbanist', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #059669;
+            letter-spacing: 0.015em;
+            text-align: center;
+        }
+
+        .font-science-gothic {
+            font-family: 'Science', 'Roboto', 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1E40AF;
+            letter-spacing: 0.04em;
+            text-align: center;
+            text-transform: uppercase;
+            font-style: normal;
+        }
+
+        .font-nunito {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #0F766E;
+            letter-spacing: 0.02em;
+            text-align: center;
+            text-transform: none;
+        }
+
+        /* Additional responsive optimizations */
+        @media (min-width: 1024px) {
+            .schedule-item {
+                padding: 16px;
+            }
+            
+            .schedule-grid {
+                gap: 18px;
+            }
+        }
+
+        .schedule-section-header p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #64748B;
+            margin: 0;
+            opacity: 0.8;
+        }
+
+        .schedule-subsection-header {
+            grid-column: 1 / -1;
+            margin: 16px 0 0 0;
+            padding: 0 16px;
+        }
+
+        .schedule-subsection-header h3 {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #22D3EE;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(34, 211, 238, 0.3);
+            padding-bottom: 0;
+        }
+
+        .schedule-section-header:first-of-type {
+            margin-top: 12px;
+        }
+
+        .schedule-section-header.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            margin: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .schedule-subsection-header.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            margin: 0;
+            height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Digital Rain Background -->
+    <div id="digital-rain"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navigation schedule-nav-spacing">
+            <div class="logo">
+                <a href="index.html">AK</a>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="schedule.html" class="nav-link active">Schedule</a>
+                <a href="about.html" class="nav-link">About</a>
+            </div>
+        </nav>
+
+        <!-- Schedule Header -->
+        <section class="schedule-header">
+            <h1 class="schedule-title">Schedule</h1>
+        </section>
+
+        <!-- Schedule Filters -->
+        <div class="schedule-filters">
+            <button class="filter-button active" data-category="school">School Schedule</button>
+            <button class="filter-button" data-category="tuition">Tuition Schedule</button>
+        </div>
+
+        <!-- Schedule Grid -->
+        <div class="schedule-grid">
+            <!-- School Schedule Section -->
+            <div class="schedule-section-header" id="school-section">
+                <h2>
+                    <svg class="section-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px; vertical-align: middle;">
+                        <path d="M3 10.5L12 3L21 10.5V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 12V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 7H8V9H6V7Z" fill="currentColor"/>
+                        <path d="M16 7H18V9H16V7Z" fill="currentColor"/>
+                    </svg>
+                    School Schedule
+                </h2>
+                <p class="schedule-section-description font-nunito">Daily school routine with departure and dismissal times</p>
+            </div>
+
+            <!-- School Departure & Start -->
+            <div class="schedule-subsection-header">
+                <h3>Departure & Start</h3>
+            </div>
+
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>08:20</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>09:50</span>
+                    </div>
+                </div>
+                <div class="date-display">Daily</div>
+                <h3 class="event-title">Leave Home</h3>
+                <p class="event-description">Start the journey to school. Taking the normal route by foot.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 20H22V18C22 16.3431 20.6569 15 19 15C18.0444 15 17.1931 15.4468 16.6438 16.1429M17 20H7M17 20V18C17 17.3438 16.8736 16.717 16.6438 16.1429M7 20H2V18C2 16.3431 3.34315 15 5 15C5.95561 15 6.80686 15.4468 7.35625 16.1429M7 20V18C7 17.3438 7.12642 16.717 7.35625 16.1429M15 7C15 8.65685 13.6569 10 12 10C10.3431 10 9 8.65685 9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7ZM21 10C21 11.1046 20.1046 12 19 12C17.8954 12 17 11.1046 17 10C17 8.89543 17.8954 8 19 8C20.1046 8 21 8.89543 21 10ZM7 10C7 11.1046 6.10457 12 5 12C3.89543 12 3 11.1046 3 10C3 8.89543 3.89543 8 5 8C6.10457 8 7 8.89543 7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Walk (10 mins)
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        10 mins
+                    </div>
+                </div>
+                <span class="event-category school">School</span>
+            </div>
+
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>08:30</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>10:00</span>
+                    </div>
+                </div>
+                <div class="date-display">Daily</div>
+                <h3 class="event-title">School Entry</h3>
+                <p class="event-description">Arrive at school campus and prepare for classes. Prayer & attendance take place before classes start.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                        </svg>
+                        Campus Gate
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        10 mins
+                    </div>
+                </div>
+                <span class="event-category school">School</span>
+            </div>
+
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>09:00</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>10:30</span>
+                    </div>
+                </div>
+                <div class="date-display">Daily</div>
+                <h3 class="event-title">Classes Begin</h3>
+                <p class="event-description">Prayer & attendance complete. Classes begin after preparation time.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Assembly
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Assembly
+                    </div>
+                </div>
+                <span class="event-category school">School</span>
+            </div>
+
+            <!-- School Dismissal Times -->
+            <div class="schedule-subsection-header">
+                <h3>Weekly Dismissal Schedule</h3>
+            </div>
+
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>13:15</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>14:45</span>
+                    </div>
+                </div>
+                <div class="date-display">Monday, Tuesday, Thursday, Friday, Saturday</div>
+                <h3 class="event-title">School Dismissal</h3>
+                <p class="event-description">Regular dismissal time. Walking home takes about 10 minutes.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 20H22V18C22 16.3431 20.6569 15 19 15C18.0444 15 17.1931 15.4468 16.6438 16.1429M17 20H7M17 20V18C17 17.3438 16.8736 16.717 16.6438 16.1429M7 20H2V18C2 16.3431 3.34315 15 5 15C5.95561 15 6.80686 15.4468 7.35625 16.1429M7 20V18C7 17.3438 7.12642 16.717 7.35625 16.1429M15 7C15 8.65685 13.6569 10 12 10C10.3431 10 9 8.65685 9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7ZM21 10C21 11.1046 20.1046 12 19 12C17.8954 12 17 11.1046 17 10C17 8.89543 17.8954 8 19 8C20.1046 8 21 8.89543 21 10ZM7 10C7 11.1046 6.10457 12 5 12C3.89543 12 3 11.1046 3 10C3 8.89543 3.89543 8 5 8C6.10457 8 7 8.89543 7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Walk (10 mins)
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        10 mins
+                    </div>
+                </div>
+                <span class="event-category school">School</span>
+            </div>
+
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>14:15</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>15:45</span>
+                    </div>
+                </div>
+                <div class="date-display">Wednesday Only</div>
+                <h3 class="event-title">School Dismissal - Wednesday</h3>
+                <p class="event-description">Extra lab period on Wednesdays. Classes run longer due to practical sessions.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 7H4V17H20V7ZM18 5V19H6V5H18Z" fill="currentColor"/>
+                        </svg>
+                        Lab Session
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        +60 mins
+                    </div>
+                </div>
+                <span class="event-category school">School</span>
+            </div>
+
+            <!-- Important Note -->
+            <div class="schedule-item" data-category="school">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">Note</span>
+                        <span>Important</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">Note</span>
+                        <span>Important</span>
+                    </div>
+                </div>
+                <div class="date-display">Daily</div>
+                <h3 class="event-title">⚠️ Sudden Extra Classes</h3>
+                <p class="event-description">Sometimes teachers take sudden extra classes (around +30 minutes). I'll come home straight after that, and it takes about 10 minutes walking.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 9V11M12 15H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Caution
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        +30 mins
+                    </div>
+                </div>
+                <span class="event-category school">Important</span>
+            </div>
+
+            <!-- Tuition Schedule Section -->
+            <div class="schedule-section-header" id="tuition-section">
+                <h2>
+                    <svg class="section-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px; vertical-align: middle;">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6.5 2H20V22H6.5A2.5 2.5 0 0 1 4 19.5V4.5A2.5 2.5 0 0 1 6.5 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 7H8V9H12V7Z" fill="currentColor"/>
+                        <path d="M16 11H12V13H16V11Z" fill="currentColor"/>
+                        <path d="M12 15H8V17H12V15Z" fill="currentColor"/>
+                        <path d="M16 7H20V9H16V7Z" fill="currentColor"/>
+                        <path d="M20 15H16V17H20V15Z" fill="currentColor"/>
+                    </svg>
+                    Tuition Schedule
+                </h2>
+                <p class="schedule-section-description font-science-gothic">TTSS pattern (Tuesday - Thursday - Saturday - Sunday)</p>
+            </div>
+
+            <!-- Tuition Schedule Events -->
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>15:00</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>16:30</span>
+                    </div>
+                </div>
+                <div class="date-display">Leave for Tuition</div>
+                <h3 class="event-title">Leave for Tuition</h3>
+                <p class="event-description">Leave home after school dismissal. 10-minute walk to tuition center.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 20H22V18C22 16.3431 20.6569 15 19 15C18.0444 15 17.1931 15.4468 16.6438 16.1429M17 20H7M17 20V18C17 17.3438 16.8736 16.717 16.6438 16.1429M7 20H2V18C2 16.3431 3.34315 15 5 15C5.95561 15 6.80686 15.4468 7.35625 16.1429M7 20V18C7 17.3438 7.12642 16.717 7.35625 16.1429M15 7C15 8.65685 13.6569 10 12 10C10.3431 10 9 8.65685 9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7ZM21 10C21 11.1046 20.1046 12 19 12C17.8954 12 17 11.1046 17 10C17 8.89543 17.8954 8 19 8C20.1046 8 21 8.89543 21 10ZM7 10C7 11.1046 6.10457 12 5 12C3.89543 12 3 11.1046 3 10C3 8.89543 3.89543 8 5 8C6.10457 8 7 8.89543 7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Walk (10 mins)
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        30 mins prep
+                    </div>
+                </div>
+                <span class="event-category tuition">Departure</span>
+            </div>
+
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>15:30 - 17:00</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>17:00 - 18:30</span>
+                    </div>
+                </div>
+                <div class="date-display">Tuesday, Thursday, Saturday</div>
+                <h3 class="event-title">Tuition Session</h3>
+                <p class="event-description">Personal tuition for academic support. Duration varies from 1-1.5 hours depending on topics the teacher covers.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 14L13.5 15.5L17 12M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Academic
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        1-1.5 hrs
+                    </div>
+                </div>
+                <span class="event-category tuition">Tuition</span>
+            </div>
+
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>17:10</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>18:40</span>
+                    </div>
+                </div>
+                <div class="date-display">Tuesday, Thursday, Saturday</div>
+                <h3 class="event-title">Reach Home</h3>
+                <p class="event-description">Complete tuition session and return home. Duration depends on topics the teacher covers. Takes 10 minutes walking.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Home
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        10 mins
+                    </div>
+                </div>
+                <span class="event-category tuition">Return</span>
+            </div>
+
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>06:50</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>08:20</span>
+                    </div>
+                </div>
+                <div class="date-display">Sunday Morning</div>
+                <h3 class="event-title">Leave for Sunday Class</h3>
+                <p class="event-description">Early morning departure for Sunday tuition class. 10-minute walk to tuition center.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 20H22V18C22 16.3431 20.6569 15 19 15C18.0444 15 17.1931 15.4468 16.6438 16.1429M17 20H7M17 20V18C17 17.3438 16.8736 16.717 16.6438 16.1429M7 20H2V18C2 16.3431 3.34315 15 5 15C5.95561 15 6.80686 15.4468 7.35625 16.1429M7 20V18C7 17.3438 7.12642 16.717 7.35625 16.1429M15 7C15 8.65685 13.6569 10 12 10C10.3431 10 9 8.65685 9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7ZM21 10C21 11.1046 20.1046 12 19 12C17.8954 12 17 11.1046 17 10C17 8.89543 17.8954 8 19 8C20.1046 8 21 8.89543 21 10ZM7 10C7 11.1046 6.10457 12 5 12C3.89543 12 3 11.1046 3 10C3 8.89543 3.89543 8 5 8C6.10457 8 7 8.89543 7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Walk (10 mins)
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                        </svg>
+                        Early Start
+                    </div>
+                </div>
+                <span class="event-category tuition">Sunday</span>
+            </div>
+
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>07:00 - 08:00</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>08:30 - 09:30</span>
+                    </div>
+                </div>
+                <div class="date-display">Sunday Morning Class</div>
+                <h3 class="event-title">Sunday Morning Class</h3>
+                <p class="event-description">Special morning tuition session on Sundays. Early intensive study session to start the week right.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                        </svg>
+                        Morning Class
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        1 hour
+                    </div>
+                </div>
+                <span class="event-category tuition">Sunday</span>
+            </div>
+
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>08:10</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>09:40</span>
+                    </div>
+                </div>
+                <div class="date-display">Sunday Morning</div>
+                <h3 class="event-title">Reach Home (Sunday)</h3>
+                <p class="event-description">Complete Sunday morning tuition session and return home. Perfect way to start the week with focused study.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Home
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        10 mins
+                    </div>
+                </div>
+                <span class="event-category tuition">Home</span>
+            </div>
+
+            <!-- TTSS Formula Reminder -->
+            <div class="schedule-item" data-category="tuition">
+                <div class="dual-timezone">
+                    <div class="time-zone ist">
+                        <span class="time-zone-label">IST</span>
+                        <span>All Week</span>
+                    </div>
+                    <div class="time-zone wib">
+                        <span class="time-zone-label">WIB</span>
+                        <span>All Week</span>
+                    </div>
+                </div>
+                <div class="date-display">TTSS Formula</div>
+                <h3 class="event-title">💡 Easy Formula to Remember</h3>
+                <p class="event-description">TTSS (Tuesday - Thursday - Saturday - Sunday) - This is your tuition schedule pattern! Perfect way to remember which days have tuition.</p>
+                <div class="event-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Remember
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Easy
+                    </div>
+                </div>
+                <span class="event-category tuition">Formula</span>
+            </div>
+        </div>
+
+
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 AK. IST: UTC+5:30 | WIB: UTC+7:00 (1.5h ahead)</p>
+                <div class="footer-links">
+                    <a href="index.html" class="footer-link">Home</a>
+                    <a href="schedule.html" class="footer-link" style="color: #6D28D9;">Schedule</a>
+                    <a href="about.html" class="footer-link">About</a>
+                    <a href="#" class="footer-link">Terms</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Schedule-specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            const scheduleItems = document.querySelectorAll('.schedule-item');
+            
+            // Navigation functionality - scroll to sections
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const category = button.getAttribute('data-category');
+                    
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Scroll to the corresponding section
+                    const targetSection = document.getElementById(category + '-section');
+                    if (targetSection) {
+                        // Smooth scroll to the section with offset for better positioning
+                        const headerOffset = 120; // Account for fixed header
+                        const elementPosition = targetSection.offsetTop;
+                        const offsetPosition = elementPosition - headerOffset;
+                        
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                    
+                    // Add button press effect
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        button.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+
+            // Add intersection observer for schedule items
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        setTimeout(() => {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            scheduleItems.forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = `opacity 600ms ease ${index * 100}ms, transform 600ms ease ${index * 100}ms`;
+                observer.observe(item);
+            });
+
+            // Add real-time clock update
+            const timeDisplays = document.querySelectorAll('.time-display');
+            const dateDisplays = document.querySelectorAll('.date-display');
+            
+            function updateCurrentTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', { 
+                    hour12: false, 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                timeDisplays.forEach(display => {
+                    if (display.parentElement.querySelector('.date-display').textContent === 'Today') {
+                        display.textContent = timeString;
+                    }
+                });
+            }
+            
+            // Update time every minute
+            setInterval(updateCurrentTime, 60000);
+            updateCurrentTime(); // Initial update
+        });
+    </script>
+</body>
+</html>
